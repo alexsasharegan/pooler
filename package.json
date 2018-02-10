@@ -1,10 +1,12 @@
 {
   "name": "pooler",
   "version": "1.0.1",
-  "description": "A generic pooling interface and TypeScript/JavaScript implementation.",
+  "description":
+    "A generic pooling interface and TypeScript/JavaScript implementation.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
+    "prebuild": "[ -d lib ] && rm -R lib",
     "build": "tsc",
     "prepublishOnly": "npm run build",
     "release": "standard-version",
@@ -15,7 +17,8 @@
     "type": "git",
     "url": "git+https://github.com/alexsasharegan/pooler.git"
   },
-  "author": "Alex Regan <alex.joseph.regan@gmail.com> (https://github.com/alexsasharegan)",
+  "author":
+    "Alex Regan <alex.joseph.regan@gmail.com> (https://github.com/alexsasharegan)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/alexsasharegan/pooler/issues"
@@ -30,14 +33,9 @@
     "typescript": "^2.7.1",
     "version": "^0.1.2"
   },
-  "files": [
-    "lib"
-  ],
+  "files": ["lib"],
   "jest": {
-    "moduleFileExtensions": [
-      "ts",
-      "js"
-    ],
+    "moduleFileExtensions": ["ts", "js"],
     "transform": {
       "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
@@ -45,9 +43,7 @@
       "**/__tests__/?(*.)(spec|test).(ts|js)",
       "**/?(*.)(spec|test).(js|ts)"
     ],
-    "collectCoverageFrom": [
-      "src/**/*.{js,ts}"
-    ],
+    "collectCoverageFrom": ["src/**/*.{js,ts}"],
     "mapCoverage": true
   }
 }

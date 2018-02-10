@@ -8,7 +8,7 @@ export type Result<T, U = any> =
       error: U;
     };
 
-export async function WrapErr<T, U = any>(
+export async function wrap_err<T, U = any>(
   p: Promise<T>
 ): Promise<Result<T, U>> {
   try {

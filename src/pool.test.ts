@@ -1,6 +1,7 @@
-import { Pooler, NewPooler } from "./pool";
+import { NewPooler } from "./pool.impl";
 import { setTimeout } from "timers";
 import { promisify } from "util";
+import { Pooler } from "./pool.types";
 
 const wait = promisify(setTimeout);
 const mock_delay = 10;

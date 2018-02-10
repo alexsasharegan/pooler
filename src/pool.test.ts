@@ -27,7 +27,7 @@ class PoolMock {
 }
 
 describe("Pool Public API:", () => {
-  it("should get a value `<T>` from the pool", async () => {
+  it("should get a value from the pool", async () => {
     let pool: Pooler<PoolMock>;
     let mock: PoolMock;
 
@@ -37,7 +37,7 @@ describe("Pool Public API:", () => {
     expect(mock.name).toBe(mock_name);
   });
 
-  it("should put a value `<T>` into the pool", async () => {
+  it("should put a value into the pool", async () => {
     let opts = Object.assign(mock_opts(), { buffer_on_start: false });
     let pool = await NewPooler<PoolMock>(opts);
     let mock = new PoolMock();
@@ -47,7 +47,7 @@ describe("Pool Public API:", () => {
     expect(pool.size()).toBe(1);
   });
 
-  it("should not put the same value `<T>` into the pool twice", async () => {
+  it("should not put the same value into the pool twice", async () => {
     let opts = Object.assign(mock_opts(), { buffer_on_start: false });
     let pool = await NewPooler<PoolMock>(opts);
     let mock = new PoolMock();
@@ -57,18 +57,37 @@ describe("Pool Public API:", () => {
     expect(pool.put(mock)).rejects.toThrow(TypeError);
   });
 
-  it("should not put a value `<T>` into the pool when at max", async () => {
-    let spy = jest.fn();
-    let opts = Object.assign(mock_opts(), { destructor: spy });
+  it("should not put a value into the pool when at max", async () => {
+    let destructor = jest.fn(PoolMock.destructor);
+    let opts = Object.assign(mock_opts(), { destructor });
     let pool = await NewPooler<PoolMock>(opts);
+    let mock = new PoolMock();
 
     expect(pool.size()).toBe(opts.max);
-    expect(spy).not.toHaveBeenCalled();
+    expect(destructor).not.toHaveBeenCalled();
 
-    let pm = new PoolMock();
-    await pool.put(pm);
+    await pool.put(mock);
+
     expect(pool.size()).toBe(opts.max);
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(destructor).toHaveBeenCalledTimes(1);
+  });
+
+  it("should invoke 'use' func with a value and return the value to pool", async () => {
+    let opts = mock_opts();
+    let pool = await NewPooler<PoolMock>(opts);
+    let use_spy = jest.fn();
+
+    await pool.use(use_spy);
+    expect(use_spy).toHaveBeenCalledWith(expect.any(PoolMock));
+
+    await pool.use(async mock => {
+      // Check that a value was pulled from the pool.
+      expect(pool.size()).toBe(opts.max - 1);
+      expect(mock).toEqual(expect.any(PoolMock));
+    });
+
+    // Check that our value was returned to the pool.
+    expect(pool.size()).toBe(opts.max);
   });
 
   it("should not buffer when at max", async () => {
@@ -82,64 +101,64 @@ describe("Pool Public API:", () => {
   });
 
   it("should drain", async () => {
-    let spy = jest.fn();
-    let opts = Object.assign(mock_opts(), { destructor: spy });
+    let destructor = jest.fn(PoolMock.destructor);
+    let opts = Object.assign(mock_opts(), { destructor });
     let pool = await NewPooler<PoolMock>(opts);
 
-    expect(spy).not.toHaveBeenCalled();
+    expect(destructor).not.toHaveBeenCalled();
 
     await pool.drain();
+
     expect(pool.size()).toBe(0);
-    expect(spy).toHaveBeenCalledWith(expect.any(PoolMock));
-    expect(spy).toHaveBeenCalledTimes(opts.max);
+    expect(destructor).toHaveBeenCalledWith(expect.any(PoolMock));
+    expect(destructor).toHaveBeenCalledTimes(opts.max);
   });
 
-  it("should handle calling Drain twice", async () => {
-    let spy = jest.fn();
-    let opts = Object.assign(mock_opts(), { destructor: spy });
+  it("should handle calling drain repeatedly", async () => {
+    let destructor = jest.fn();
+    let opts = Object.assign(mock_opts(), { destructor });
     let pool = await NewPooler<PoolMock>(opts);
     let ps: Promise<any>[] = [];
 
-    expect(spy).not.toHaveBeenCalled();
+    expect(destructor).not.toHaveBeenCalled();
 
     ps.push(pool.drain().then(() => expect(pool.size()).toBe(0)));
     ps.push(pool.drain().then(() => expect(pool.size()).toBe(0)));
+    ps.push(pool.drain().then(() => expect(pool.size()).toBe(0)));
+    ps.push(pool.drain().then(() => expect(pool.size()).toBe(0)));
+
     await Promise.all(ps);
-    expect(spy).toHaveBeenCalledWith(expect.any(PoolMock));
-    expect(spy).toHaveBeenCalledTimes(opts.max);
+
+    expect(destructor).toHaveBeenCalledWith(expect.any(PoolMock));
+    expect(destructor).toHaveBeenCalledTimes(opts.max);
   });
 });
 
 describe("Pool options", () => {
   it("should call 'factory'", async () => {
     // Use a Jest spy, but wrap it so we can return unique objects for the Pool.
-    let spy = jest.fn();
-    let mock_spy = () => (spy(), new PoolMock());
-    let opts = Object.assign(mock_opts(), { factory: mock_spy });
+    let factory = jest.fn(PoolMock.factory);
+    let opts = Object.assign(mock_opts(), { factory });
     let pool = await NewPooler<PoolMock>(opts);
 
-    expect(spy).toHaveBeenCalled();
-    expect(spy).toHaveBeenCalledTimes(opts.max);
+    expect(factory).toHaveBeenCalledTimes(opts.max);
   });
 
   it("should call 'destructor'", async () => {
-    let spy = jest.fn();
-    let opts = Object.assign(mock_opts(), { destructor: spy });
+    let destructor = jest.fn(PoolMock.destructor);
+    let opts = Object.assign(mock_opts(), { destructor });
     let pool = await NewPooler<PoolMock>(opts);
 
-    expect(spy).not.toHaveBeenCalled();
+    expect(destructor).not.toHaveBeenCalled();
 
     await pool.drain();
-    expect(spy).toHaveBeenCalledTimes(opts.max);
+    expect(destructor).toHaveBeenCalledTimes(opts.max);
   });
 
   it("should use 'buffer_on_start'", async () => {
     let opts = Object.assign(mock_opts(), { buffer_on_start: false });
     let pool = await NewPooler<PoolMock>(opts);
 
-    // Since pool is buffered asynchronously,
-    // wait to allow our pool a chance to buffer.
-    await wait(mock_delay * 2);
     expect(pool.size()).toBe(0);
 
     await pool.buffer();
@@ -170,33 +189,107 @@ describe("Pool options", () => {
 
     expect(pool.size()).toBe(max);
   });
+
+  it("should use 'is_ok_sync' callback", async () => {
+    let is_ok_sync = jest.fn((mock: PoolMock) => true);
+    let pool = await NewPooler(Object.assign(mock_opts(), { is_ok_sync }));
+
+    let mock = await pool.get();
+    await pool.put(mock);
+
+    expect(is_ok_sync).toHaveBeenCalledWith(expect.any(PoolMock));
+  });
+
+  it("should use 'is_ok' callback", async () => {
+    let is_ok = jest.fn(async (mock: PoolMock) => true);
+    let pool = await NewPooler(Object.assign(mock_opts(), { is_ok }));
+
+    let mock = await pool.get();
+    await pool.put(mock);
+
+    expect(is_ok).toHaveBeenCalledWith(expect.any(PoolMock));
+  });
+
+  it("should use both health check callbacks and call 'is_ok_sync' first", async () => {
+    enum WhichFn {
+      is_ok = 1,
+      is_ok_sync,
+    }
+
+    let first: WhichFn;
+
+    let is_ok = jest.fn(async (mock: PoolMock) => {
+      if (!first) {
+        first = WhichFn.is_ok;
+      }
+      return true;
+    });
+
+    let is_ok_sync = jest.fn((mock: PoolMock) => {
+      if (!first) {
+        first = WhichFn.is_ok_sync;
+      }
+      return true;
+    });
+
+    let pool = await NewPooler(
+      Object.assign(mock_opts(), { is_ok, is_ok_sync })
+    );
+
+    let mock = await pool.get();
+    await pool.put(mock);
+
+    expect(is_ok_sync).toHaveBeenCalledWith(expect.any(PoolMock));
+    expect(is_ok).toHaveBeenCalledWith(expect.any(PoolMock));
+    expect(first).toBe(WhichFn.is_ok_sync);
+  });
+
+  it("should call destroy if health check callbacks return false", async () => {
+    // Initialize 'ok' to true so we can buffer up the pool.
+    let ok = true;
+
+    let is_ok = jest.fn(async (mock: PoolMock) => ok);
+    let is_ok_sync = jest.fn((mock: PoolMock) => ok);
+
+    let destructor = jest.fn(PoolMock.destructor);
+    let opts = Object.assign(mock_opts(), { is_ok, is_ok_sync, destructor });
+    let pool = await NewPooler(opts);
+
+    // Flip ok so our buffered pool can't 'put' objects.
+    ok = false;
+
+    let mock = await pool.get();
+    await pool.put(mock);
+
+    expect(destructor).toHaveBeenCalledWith(expect.any(PoolMock));
+    expect(pool.size()).toBe(opts.max - 1);
+  });
 });
 
 describe("Pool internals", () => {
   it("should re-buffer when the 'min' threshold is met", async () => {
-    let factory_spy = jest.fn();
-    let opts = Object.assign(mock_opts(), {
-      factory() {
-        factory_spy();
-        return PoolMock.factory();
-      },
-    });
-    let count = 0;
+    let factory = jest.fn(PoolMock.factory);
+    let opts = Object.assign(mock_opts(), { factory });
+    let created_count = 0;
     let pool = await NewPooler<PoolMock>(opts);
 
-    expect(factory_spy).toHaveBeenCalledTimes(opts.max);
-    count += opts.max;
+    expect(factory).toHaveBeenCalledTimes(opts.max);
+    // Buffered up to max
+    created_count += opts.max;
 
     // Cross the threshold by just one.
     let i = opts.max - opts.min + 1;
-    count += i;
+    // Should create the difference from max
+    // (add here before 'i' is mutated)
+    created_count += i;
+
     while (i--) {
       expect(await pool.get()).toBeInstanceOf(PoolMock);
     }
 
     await wait(mock_delay * 5);
 
-    expect(factory_spy).toHaveBeenCalledTimes(count);
+    expect(factory).toHaveBeenCalledTimes(created_count);
     expect(pool.size()).toBe(opts.max);
   });
 

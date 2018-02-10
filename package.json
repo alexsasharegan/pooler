@@ -43,7 +43,7 @@
       "**/__tests__/?(*.)(spec|test).(ts|js)",
       "**/?(*.)(spec|test).(js|ts)"
     ],
-    "collectCoverageFrom": ["src/**/*.{js,ts}"],
+    "collectCoverageFrom": ["!src/**/*.types.{js,ts}", "src/**/*.{js,ts}"],
     "mapCoverage": true
   }
 }

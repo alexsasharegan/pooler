@@ -16,10 +16,13 @@ export async function NewPooler<T>(
     buffer_on_start = true,
   } = options;
 
+  // Wrap function for error handling
+  const destroy = (x: T) => wrap_err(destructor(x));
+
   let buf: T[] = [];
   let deferred: DeferredPromise<T>[] = [];
-  let filling: boolean = false;
-  let draining: boolean = false;
+  let filling = false;
+  let draining = false;
 
   let events: { [event in PoolEvent]: Array<() => void> } = {
     full: [],
@@ -49,7 +52,7 @@ export async function NewPooler<T>(
     }
   };
   const on_drained = async () => {
-    if (filling) {
+    if (draining) {
       await new Promise(r => events.drained.push(r));
       return;
     }
@@ -132,15 +135,18 @@ export async function NewPooler<T>(
 
   const put: (x: T) => Promise<void> = async x => {
     if (size() >= max || draining) {
-      return destructor(x);
+      await destroy(x);
+      return;
     }
 
     if (is_ok_sync && !is_ok_sync(x)) {
-      return destructor(x);
+      await destroy(x);
+      return;
     }
 
     if (is_ok && !await is_ok(x)) {
-      return destructor(x);
+      await destroy(x);
+      return;
     }
 
     let y: T;
@@ -165,14 +171,14 @@ export async function NewPooler<T>(
 
     if (!cb_result.ok) {
       console.error(cb_result.error);
-      destructor(x);
+      await destroy(x);
       if (on_error) {
         on_error(cb_result.error);
       }
       return;
     }
 
-    put(x);
+    await put(x);
   };
 
   const drain: () => Promise<void> = async () => {
@@ -181,13 +187,13 @@ export async function NewPooler<T>(
       return;
     }
 
-    let ps: Promise<void>[] = [];
+    let ps: Promise<any>[] = [];
     let x: T | undefined;
 
     draining = true;
 
     while ((x = buf.shift())) {
-      ps.push(destructor(x));
+      ps.push(destroy(x));
     }
 
     await wrap_err(Promise.all(ps));

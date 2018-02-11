@@ -27,3 +27,11 @@ const pool_options = {
 };
 
 const pool = NewPooler(pool_options);
+
+app.get("/products", async (req, res) => {
+  pool.use(async conn => {
+    let products = await conn.table("products").all();
+    res.json(products);
+    res.end();
+  });
+});

@@ -1,12 +1,12 @@
 import { NewPooler } from "./pool.impl";
 import { setTimeout } from "timers";
 import { promisify } from "util";
-import { Pooler } from "./pool.types";
+import { Pooler, PoolOptions } from "./pool.types";
 
 const wait = promisify(setTimeout);
 const mock_delay = 10;
 const mock_name = "PoolMock Object";
-const mock_opts = () => ({
+const mock_opts: () => PoolOptions<PoolMock> = () => ({
   factory: PoolMock.factory,
   destructor: PoolMock.destructor,
   max: 10,

@@ -8,6 +8,7 @@
     "prebuild": "rm -Rf lib",
     "build": "tsc",
     "prepublishOnly": "npm run build",
+    "prerelease": "npm test",
     "release": "standard-version",
     "postrelease": "git push --follow-tags origin master && npm publish",
     "test": "jest --verbose --coverage"

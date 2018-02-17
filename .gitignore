@@ -1,6 +1,7 @@
 .*
 !.gitignore
 !.travis.yml
+!.coveralls.yml
 node_modules/
 coverage/
 lib/

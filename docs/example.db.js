@@ -1,12 +1,13 @@
-const { NewPooler } = require("pooler");
+import * as r from "rethinkdb";
+import { NewPooler } from "pooler";
 
-const pool_options = {
+const config = {
   max: 10, // default
   min: 3, // default
   max_retries: 3, // default
   buffer_on_start: true, // default
   async factory() {
-    return await Database.connect("localhost:8080");
+    return await r.connect("localhost:8080");
   },
   async destructor(conn) {
     await conn.close();
@@ -26,11 +27,12 @@ const pool_options = {
   },
 };
 
-const pool = NewPooler(pool_options);
+const pool = NewPooler(config);
 
 app.get("/products", async (req, res) => {
   pool.use(async conn => {
-    let products = await conn.table("products").all();
+    let cursor = await r.table("products").run(conn);
+    let products = await cursor.toArray();
     res.json(products);
     res.end();
   });

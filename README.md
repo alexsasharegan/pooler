@@ -21,10 +21,10 @@ making single queries to a database. It removes the need for a lot of
 boilerplate code, and also removes the possibility you forget to put the value
 back in the pool.
 
-![pooler interface](./docs/pooler-interface.png)
+![pooler interface](./docs/pooler-interface.1.png)
 
 ## Basic Usage
 
 To get started, created a pooler from the implementation's option object.
 
-![basic usage with database](./docs/db-basic.png)
+![basic usage with database](./docs/db-basic.1.png)

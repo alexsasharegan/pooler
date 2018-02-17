@@ -1,5 +1,12 @@
 # Pooler
 
+[![npm](https://img.shields.io/npm/v/pooler.svg?style=for-the-badge)](https://img.shields.io/npm/v/pooler)
+[![npm downloads](https://img.shields.io/npm/dt/pooler.svg?style=for-the-badge)](https://www.npmjs.com/package/pooler)
+[![GitHub issues](https://img.shields.io/github/issues/alexsasharegan/pooler.svg?style=for-the-badge)](https://github.com/alexsasharegan/pooler/issues)
+[![Travis](https://img.shields.io/travis/alexsasharegan/pooler.svg?style=for-the-badge)](https://github.com/alexsasharegan/pooler)
+[![Coverage Status](https://img.shields.io/coveralls/github/alexsasharegan/pooler.svg?style=for-the-badge)](https://coveralls.io/github/alexsasharegan/pooler)
+[![GitHub license](https://img.shields.io/github/license/alexsasharegan/pooler.svg?style=for-the-badge)](https://github.com/alexsasharegan/pooler/blob/master/LICENSE.md)
+
 A generic pooling interface and TypeScript/JavaScript implementation.
 
 ## The interface

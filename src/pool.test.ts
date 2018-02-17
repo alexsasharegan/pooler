@@ -90,6 +90,25 @@ describe("Pool Public API:", () => {
     expect(pool.size()).toBe(opts.max);
   });
 
+  it("should handle 'use' func errors", async () => {
+    let opts = Object.assign(mock_opts(), {
+      destructor: jest.fn(),
+    });
+    let pool = await NewPooler<PoolMock>(opts);
+    let on_err = jest.fn();
+
+    await pool.use(async mock => {
+      throw new Error();
+    }, on_err);
+    expect(on_err).toHaveBeenCalledWith(expect.any(Error));
+    expect(opts.destructor).toHaveBeenCalledWith(expect.any(PoolMock));
+
+    await pool.use(async mock => {
+      throw new Error();
+    });
+    expect(opts.destructor).toHaveBeenCalledTimes(2);
+  });
+
   it("should not buffer when at max", async () => {
     let opts = Object.assign(mock_opts());
     let pool = await NewPooler<PoolMock>(opts);
@@ -210,6 +229,21 @@ describe("Pool options", () => {
     expect(is_ok).toHaveBeenCalledWith(expect.any(PoolMock));
   });
 
+  it("should destroy when 'is_ok' returns false after 'put'", async () => {
+    // True for initial buffer
+    let ok = true;
+    let is_ok = jest.fn(async (mock: PoolMock) => ok);
+    let opts = Object.assign(mock_opts(), { is_ok, destructor: jest.fn() });
+    let pool = await NewPooler(opts);
+
+    ok = false;
+    let mock = await pool.get();
+    await pool.put(mock);
+
+    expect(is_ok).toHaveBeenCalledWith(expect.any(PoolMock));
+    expect(opts.destructor).toHaveBeenCalledWith(expect.any(PoolMock));
+  });
+
   it("should use both health check callbacks and call 'is_ok_sync' first", async () => {
     enum WhichFn {
       is_ok = 1,
@@ -267,6 +301,15 @@ describe("Pool options", () => {
 });
 
 describe("Pool internals", () => {
+  it("should use default options", async () => {
+    let opts: any = mock_opts();
+    delete opts.min;
+    delete opts.max;
+
+    let pool = await NewPooler(opts);
+    expect(pool.size()).toMatchSnapshot();
+  });
+
   it("should re-buffer when the 'min' threshold is met", async () => {
     let factory = jest.fn(PoolMock.factory);
     let opts = Object.assign(mock_opts(), { factory });
@@ -291,6 +334,22 @@ describe("Pool internals", () => {
 
     expect(factory).toHaveBeenCalledTimes(created_count);
     expect(pool.size()).toBe(opts.max);
+  });
+
+  it("should not double-buffer", async () => {
+    let factory = jest.fn(PoolMock.factory);
+    let opts = Object.assign(mock_opts(), { factory, buffer_on_start: false });
+    let pool = await NewPooler<PoolMock>(opts);
+    // Expect un-buffered pool
+    expect(factory).toHaveBeenCalledTimes(0);
+    // Call buffer repeated before completion
+    await Promise.all([
+      pool.buffer(),
+      pool.buffer(),
+      pool.buffer(),
+      pool.buffer(),
+    ]);
+    expect(factory).toHaveBeenCalledTimes(opts.max);
   });
 
   it("should flushed deferred callers", async () => {

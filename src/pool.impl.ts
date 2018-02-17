@@ -45,18 +45,8 @@ export async function NewPooler<T>(
   };
 
   const size = () => buf.length;
-  const on_full = async () => {
-    if (filling) {
-      await new Promise(r => events.full.push(r));
-      return;
-    }
-  };
-  const on_drained = async () => {
-    if (draining) {
-      await new Promise(r => events.drained.push(r));
-      return;
-    }
-  };
+  const on_full = async () => new Promise(r => events.full.push(r));
+  const on_drained = async () => new Promise(r => events.drained.push(r));
   const buffer = async () => {
     if (filling) {
       await on_full();

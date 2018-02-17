@@ -1,6 +1,6 @@
 {
   "name": "pooler",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A generic pooling interface and TypeScript/JavaScript implementation.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -44,7 +44,7 @@
     },
     "testMatch": [
       "**/__tests__/?(*.)(spec|test).(ts|js)",
-      "**/?(*.)(spec|test).(js|ts)"
+      "**/src/?(*.)(spec|test).(js|ts)"
     ],
     "collectCoverageFrom": [
       "!src/**/*.types.{js,ts}",

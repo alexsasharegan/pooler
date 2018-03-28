@@ -127,8 +127,8 @@ export async function NewPooler<T>(
     // Should keep values from getting too stale.
     let x = buf.shift();
     if (!x) {
-      // Lazily create T if the pool is dry. Don't wait for completion.
-      fill_one();
+      // Check levels to potentially buffer up to min threshold.
+      monitor_levels();
 
       // Create a promise to be resolved once the buffer refills.
       // Internal 'added' event listener will flush these deferred promises.

@@ -29,16 +29,6 @@
 
     /* Module Resolution Options */
     "moduleResolution": "node",
-    // "baseUrl": "./",
-    // "paths": {
-    // "~/*": ["src/*"]
-    // },
-    // "rootDirs": [],
-    // "typeRoots": ["@types"],
-    // "types": [],
-    // "allowSyntheticDefaultImports": true,
-    // "preserveSymlinks": true,
-
     /* Source Map Options */
     // "sourceRoot": "./",
     // "mapRoot": "./",

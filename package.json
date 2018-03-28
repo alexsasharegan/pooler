@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
+    "precommit": "pretty-quick --staged",
     "prebuild": "rm -Rf lib",
     "build": "tsc",
     "prepublishOnly": "npm run build",
@@ -25,14 +26,16 @@
   },
   "homepage": "https://github.com/alexsasharegan/pooler#readme",
   "devDependencies": {
-    "@types/jest": "^22.1.2",
-    "@types/node": "^9.4.4",
+    "@types/jest": "^22.2.2",
+    "@types/node": "^9.6.0",
     "coveralls": "^3.0.0",
-    "jest": "^22.2.2",
-    "standard": "^10.0.3",
-    "ts-jest": "^22.0.3",
-    "typescript": "^2.7.1",
-    "version": "^0.1.2"
+    "husky": "^0.14.3",
+    "jest": "^22.4.3",
+    "prettier": "^1.11.1",
+    "pretty-quick": "^1.4.1",
+    "standard-version": "^4.3.0",
+    "ts-jest": "^22.4.2",
+    "typescript": "^2.8.1"
   },
   "files": [
     "lib"
@@ -43,16 +46,8 @@
       "js"
     ],
     "transform": {
-      "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+      "^.+\\.tsx?$": "ts-jest"
     },
-    "testMatch": [
-      "**/__tests__/?(*.)(spec|test).(ts|js)",
-      "**/src/?(*.)(spec|test).(js|ts)"
-    ],
-    "collectCoverageFrom": [
-      "!src/**/*.types.{js,ts}",
-      "src/**/*.{js,ts}"
-    ],
-    "mapCoverage": true
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$"
   }
 }

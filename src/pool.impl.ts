@@ -48,11 +48,11 @@ export async function NewPooler<T>(
   };
 
   const fill_one = async () => {
-    let fill_result = await wrap_err(retry_factory(max_retries));
-    if (!fill_result.ok) {
-      return console.error(fill_result.error);
+    if (size() >= max) {
+      return;
     }
-    put(fill_result.value);
+
+    put(await retry_factory());
   };
 
   const size = () => buf.length;
@@ -81,8 +81,8 @@ export async function NewPooler<T>(
     invoke("full");
   };
 
-  const retry_factory: (retries: number) => Promise<T> = async retries => {
-    let tries = backoff(retries);
+  const retry_factory: () => Promise<T> = async () => {
+    let tries = backoff(max_retries);
     let result: Result<T>;
 
     /* istanbul ignore next */
@@ -127,6 +127,9 @@ export async function NewPooler<T>(
     // Should keep values from getting too stale.
     let x = buf.shift();
     if (!x) {
+      // Lazily create T if the pool is dry. Don't wait for completion.
+      fill_one();
+
       // Create a promise to be resolved once the buffer refills.
       // Internal 'added' event listener will flush these deferred promises.
       return new Promise<T>(resolve => {

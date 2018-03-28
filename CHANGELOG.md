@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.5.2"></a>
+## [1.5.2](https://github.com/alexsasharegan/pooler/compare/v1.5.1...v1.5.2) (2018-03-28)
+
+
+### Bug Fixes
+
+* use monitor_levels on get for dryness check ([0d872e9](https://github.com/alexsasharegan/pooler/commit/0d872e9))
+
+
+
 <a name="1.5.1"></a>
 ## [1.5.1](https://github.com/alexsasharegan/pooler/compare/v1.5.0...v1.5.1) (2018-03-28)
 

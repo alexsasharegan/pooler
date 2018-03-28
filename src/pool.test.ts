@@ -313,27 +313,35 @@ describe("Pool internals", () => {
   it("should re-buffer when the 'min' threshold is met", async () => {
     let factory = jest.fn(PoolMock.factory);
     let opts = Object.assign(mock_opts(), { factory });
-    let created_count = 0;
     let pool = await NewPooler<PoolMock>(opts);
 
     expect(factory).toHaveBeenCalledTimes(opts.max);
-    // Buffered up to max
-    created_count += opts.max;
-
     // Cross the threshold by just one.
     let i = opts.max - opts.min + 1;
-    // Should create the difference from max
-    // (add here before 'i' is mutated)
-    created_count += i;
-
     while (i--) {
       expect(await pool.get()).toBeInstanceOf(PoolMock);
     }
 
     await wait(mock_delay * 5);
 
-    expect(factory).toHaveBeenCalledTimes(created_count);
-    expect(pool.size()).toBe(opts.max);
+    // Expect the factory to have buffered fully once,
+    // plus one from when we dipped below the queue by one.
+    expect(factory).toHaveBeenCalledTimes(opts.max + 1);
+    expect(pool.size()).toBe(opts.min);
+  });
+
+  it("should buffer lazily", async () => {
+    let factory = jest.fn(PoolMock.factory);
+    let opts = Object.assign(mock_opts(), { factory, buffer_on_start: false });
+    let pool = await NewPooler<PoolMock>(opts);
+    let use_fn = jest.fn(async () => undefined);
+
+    expect(pool.size()).toBe(0);
+    await pool.use(use_fn);
+    await wait(mock_delay * 5);
+    expect(pool.size()).toBeGreaterThanOrEqual(opts.min);
+    expect(pool.size()).toBeLessThan(opts.max);
+    expect(use_fn).toHaveBeenCalledWith(expect.any(PoolMock));
   });
 
   it("should not double-buffer", async () => {

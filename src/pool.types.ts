@@ -122,11 +122,14 @@ export interface Pooler<T> {
     onError?: (err: any) => void
   ): Promise<void>;
   /**
-   * Buffer will asynchronously buffer type `<T>` up to max.
+   * Buffer will asynchronously buffer type `<T>` up to max || min.
    * The returned promise resolves once the buffering is complete.
-   * If the pool is currently buffering, Buffer returns early.
+   * If the pool is currently buffering, does not double-buffer,
+   * but returns a promise once current buffer cycle is complete.
+   *
+   * @param {boolean} [false] fill_to_min
    */
-  buffer(): Promise<void>;
+  buffer(fill_to_min: boolean): Promise<void>;
   /**
    * Drain empties the pool and invokes the destructor on each value `<T>`.
    * It resolves once all destructors have resolved.

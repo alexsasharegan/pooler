@@ -58,13 +58,13 @@ export async function NewPooler<T>(
   const size = () => buf.length;
   const on_full = async () => new Promise(r => events.full.push(r));
   const on_drained = async () => new Promise(r => events.drained.push(r));
-  const buffer = async () => {
+  const buffer = async (fill_to_min = false) => {
     if (filling) {
       await on_full();
       return;
     }
 
-    let fill_to = max - size();
+    let fill_to = (fill_to_min ? min : max) - size();
     if (fill_to < 1) {
       return;
     }
@@ -106,7 +106,7 @@ export async function NewPooler<T>(
 
   const monitor_levels = () => {
     if (size() < min && !draining) {
-      buffer();
+      buffer(true);
     }
   };
 

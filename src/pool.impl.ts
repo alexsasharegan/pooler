@@ -1,5 +1,12 @@
-import { wrap_err } from "./wrap";
-import { PoolOptions, Pooler, DeferredPromise, PoolEvent } from "./pool.types";
+import { wrap_err, Result } from "./wrap";
+import {
+  PoolOptions,
+  Pooler,
+  DeferredPromise,
+  PoolEvent,
+  RetryLimitError,
+} from "./pool.types";
+import { new_backoff_generator } from "./backoff";
 
 export async function NewPooler<T>(
   options: PoolOptions<T>
@@ -13,6 +20,8 @@ export async function NewPooler<T>(
     max = 10,
     min = 3,
     max_retries = 3,
+    timeout = 100,
+    timeout_cap = 30000,
     buffer_on_start = true,
   } = options;
 
@@ -23,6 +32,8 @@ export async function NewPooler<T>(
   let deferred: DeferredPromise<T>[] = [];
   let filling = false;
   let draining = false;
+  let backoff = new_backoff_generator(timeout, timeout_cap);
+  let sleeping: SleepToken[] = [];
 
   let events: { [event in PoolEvent]: Array<() => void> } = {
     full: [],
@@ -71,21 +82,26 @@ export async function NewPooler<T>(
   };
 
   const retry_factory: (retries: number) => Promise<T> = async retries => {
-    if (!retries) {
-      let err = new RangeError(
-        `Max attempts to create new pooled type exceeded.`
-      );
-      err.name = "RetryLimitError";
-      throw err;
-    }
+    let tries = backoff(retries);
+    let result: Result<T>;
 
-    let factory_result = await wrap_err(factory());
-    if (!factory_result.ok) {
-      console.error(factory_result.error);
-      return retry_factory(--retries);
-    }
+    /* istanbul ignore next */
+    while (true) {
+      result = await wrap_err(factory());
+      if (result.ok) {
+        return result.value;
+      }
 
-    return factory_result.value;
+      let x = tries.next();
+      if (x.done) {
+        throw NewRetryLimitError();
+      }
+
+      let tkn = sleep(x.value);
+      sleeping.push(tkn);
+
+      await new Promise(resolve => tkn.then(resolve));
+    }
   };
 
   const monitor_levels = () => {
@@ -182,6 +198,9 @@ export async function NewPooler<T>(
 
     draining = true;
 
+    sleeping.forEach(tkn => tkn.cancel());
+    sleeping = [];
+
     while ((x = buf.shift())) {
       ps.push(destroy(x));
     }
@@ -204,4 +223,51 @@ export async function NewPooler<T>(
     put,
     use,
   };
+}
+
+function NewRetryLimitError(): RetryLimitError {
+  return Object.assign(
+    new RangeError(`Max attempts to create new pooled type exceeded.`),
+    {
+      get code(): "RetryLimitError" {
+        return "RetryLimitError";
+      },
+    }
+  );
+}
+
+export function sleep(ms: number) {
+  let done = false;
+  const listeners: Array<() => any> = [];
+  const timer = setTimeout(() => {
+    done = true;
+    for (const cb of listeners) {
+      cb();
+    }
+  }, ms);
+
+  const sleep_tkn: SleepToken = {
+    cancel() {
+      if (!done) {
+        clearTimeout(timer);
+      }
+    },
+    then(fn: () => any) {
+      if (done) {
+        fn();
+        return sleep_tkn;
+      }
+
+      listeners.push(fn);
+
+      return sleep_tkn;
+    },
+  };
+
+  return sleep_tkn;
+}
+
+export interface SleepToken {
+  cancel(): void;
+  then(fn: () => any): SleepToken;
 }

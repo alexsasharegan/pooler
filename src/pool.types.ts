@@ -48,10 +48,14 @@ export type PoolOptions<T> = {
   is_ok_sync?: HealthCheckerSync<T>;
   /**
    * max is the maximum number of T you want pooled.
+   *
+   * @default 10
    */
   max?: number;
   /**
    * min is the threshold at which the pool is re-buffered.
+   *
+   * @default 3
    */
   min?: number;
   /**
@@ -60,8 +64,24 @@ export type PoolOptions<T> = {
    */
   max_retries?: number;
   /**
+   * timeout is the base length of time in ms the factory func
+   * should retry construction of T. Used to calculate exponential backoff.
+   *
+   * @default 100
+   */
+  timeout?: number;
+  /**
+   * timeout_cap is the maximum length of time in ms the factory func
+   * should wait for a construction attempt.
+   *
+   * @default 30000
+   */
+  timeout_cap?: number;
+  /**
    * buffer_on_start indicates whether or not the pool
    * should start buffering T upon instantiation.
+   *
+   * @default true
    */
   buffer_on_start?: boolean;
 };
@@ -115,3 +135,7 @@ export interface Pooler<T> {
 }
 
 export type PoolEvent = "full" | "drained";
+
+export interface RetryLimitError extends RangeError {
+  code: "RetryLimitError";
+}

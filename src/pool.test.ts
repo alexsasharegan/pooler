@@ -1,4 +1,4 @@
-import { NewPooler } from "./pool.impl";
+import { NewPooler, sleep } from "./pool.impl";
 import { setTimeout } from "timers";
 import { promisify } from "util";
 import { Pooler, PoolOptions } from "./pool.types";
@@ -402,5 +402,30 @@ describe("Pool internals", () => {
     } catch (err) {
       expect(err).toBeInstanceOf(RangeError);
     }
+  });
+});
+
+describe("SleepToken", () => {
+  it("should invoke `.then` callback", async () => {
+    let tkn = sleep(0);
+    let spy = jest.fn();
+    tkn.then(spy);
+
+    expect(spy).not.toHaveBeenCalled();
+    await new Promise(r => setTimeout(r, 1));
+    expect(spy).toHaveBeenCalled();
+
+    let late_spy = jest.fn();
+    tkn.then(late_spy);
+    expect(late_spy).toHaveBeenCalled();
+  });
+
+  it("should not invoke `.then` callback once canceled", async () => {
+    let tkn = sleep(0);
+    let spy = jest.fn();
+    tkn.then(spy).cancel();
+
+    await new Promise(r => setTimeout(r, 1));
+    expect(spy).not.toHaveBeenCalled();
   });
 });

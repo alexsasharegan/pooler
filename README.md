@@ -21,6 +21,8 @@ making single queries to a database. It removes the need for a lot of
 boilerplate code, and also removes the possibility you forget to put the value
 back in the pool.
 
+Note that the factory function implements an equal jitter exponential backoff for retrying resource creation.
+
 ![pooler interface](./docs/pooler-interface.1.png)
 
 ## Basic Usage

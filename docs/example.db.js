@@ -1,33 +1,23 @@
 import * as r from "rethinkdb";
-import { NewPooler } from "pooler";
+import { NewPooler } from "../lib";
 
-const config = {
+const pool = NewPooler({
   max: 10, // default
   min: 3, // default
   max_retries: 3, // default
   buffer_on_start: true, // default
+  timeout: 250, // default
+  timeout_cap: 30000, // default
   async factory() {
     return await r.connect("localhost:8080");
   },
   async destructor(conn) {
     await conn.close();
   },
-  async is_ok(conn) {
-    if (!conn.open) {
-      return false;
-    }
-
-    try {
-      await conn.ping();
-    } catch (error) {
-      return false;
-    }
-
-    return true;
+  is_ok_sync(conn) {
+    return conn.open;
   },
-};
-
-const pool = NewPooler(config);
+});
 
 app.get("/products", async (req, res) => {
   pool.use(async conn => {

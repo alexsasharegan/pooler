@@ -1,6 +1,7 @@
 .*
 !.gitignore
 !.prettierrc
+!.prettierignore
 !.travis.yml
 !.coveralls.yml
 node_modules/

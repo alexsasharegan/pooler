@@ -23,10 +23,10 @@ back in the pool.
 
 Note that the factory function implements an equal jitter exponential backoff for retrying resource creation.
 
-![pooler interface](./docs/pooler-interface.2.png)
+![pooler interface](./docs/pooler-interface.3.png)
 
 ## Basic Usage
 
 To get started, created a pooler from the implementation's option object.
 
-![basic usage with database](./docs/db-basic.2.png)
+![basic usage with database](./docs/db-basic.3.png)

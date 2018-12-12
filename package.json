@@ -1,6 +1,6 @@
 {
   "name": "pooler",
-  "version": "1.5.2",
+  "version": "2.0.0",
   "description": "A generic pooling interface and TypeScript/JavaScript implementation.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

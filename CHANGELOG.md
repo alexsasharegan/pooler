@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="2.0.0"></a>
+# [2.0.0](https://github.com/alexsasharegan/pooler/compare/v1.5.2...v2.0.0) (2018-12-12)
+
+
+### Bug Fixes
+
+* security updates for deps ([c10c5c7](https://github.com/alexsasharegan/pooler/commit/c10c5c7))
+* **tests:** updates for updated TS strictness ([377d2e9](https://github.com/alexsasharegan/pooler/commit/377d2e9))
+
+
+### Features
+
+* update target to es2015 ([9df889a](https://github.com/alexsasharegan/pooler/commit/9df889a))
+
+
+### BREAKING CHANGES
+
+* compile target has been moved to es2015
+
+Signed-off-by: Alex Regan <alex.joseph.regan@gmail.com>
+
+
+
 <a name="1.5.2"></a>
 ## [1.5.2](https://github.com/alexsasharegan/pooler/compare/v1.5.1...v1.5.2) (2018-03-28)
 

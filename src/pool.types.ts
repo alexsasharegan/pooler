@@ -129,7 +129,7 @@ export interface Pooler<T> {
    *
    * @param {boolean} [false] fill_to_min
    */
-  buffer(fill_to_min: boolean): Promise<void>;
+  buffer(fill_to_min?: boolean): Promise<void>;
   /**
    * Drain empties the pool and invokes the destructor on each value `<T>`.
    * It resolves once all destructors have resolved.

@@ -1,12 +1,12 @@
 import { NewPooler, sleep } from "./pool.impl";
 import { setTimeout } from "timers";
 import { promisify } from "util";
-import { Pooler, PoolOptions } from "./pool.types";
+import { Pooler } from "./pool.types";
 
 const wait = promisify(setTimeout);
 const mock_delay = 10;
 const mock_name = "PoolMock Object";
-const mock_opts: () => PoolOptions<PoolMock> = () => ({
+const mock_opts = () => ({
   factory: PoolMock.factory,
   destructor: PoolMock.destructor,
   max: 10,
@@ -97,13 +97,13 @@ describe("Pool Public API:", () => {
     let pool = await NewPooler<PoolMock>(opts);
     let on_err = jest.fn();
 
-    await pool.use(async mock => {
+    await pool.use(async () => {
       throw new Error();
     }, on_err);
     expect(on_err).toHaveBeenCalledWith(expect.any(Error));
     expect(opts.destructor).toHaveBeenCalledWith(expect.any(PoolMock));
 
-    await pool.use(async mock => {
+    await pool.use(async () => {
       throw new Error();
     });
     expect(opts.destructor).toHaveBeenCalledTimes(2);
@@ -158,7 +158,7 @@ describe("Pool options", () => {
     // Use a Jest spy, but wrap it so we can return unique objects for the Pool.
     let factory = jest.fn(PoolMock.factory);
     let opts = Object.assign(mock_opts(), { factory });
-    let pool = await NewPooler<PoolMock>(opts);
+    await NewPooler<PoolMock>(opts);
 
     expect(factory).toHaveBeenCalledTimes(opts.max);
   });
@@ -210,7 +210,7 @@ describe("Pool options", () => {
   });
 
   it("should use 'is_ok_sync' callback", async () => {
-    let is_ok_sync = jest.fn((mock: PoolMock) => true);
+    let is_ok_sync = jest.fn(() => true);
     let pool = await NewPooler(Object.assign(mock_opts(), { is_ok_sync }));
 
     let mock = await pool.get();
@@ -220,7 +220,7 @@ describe("Pool options", () => {
   });
 
   it("should use 'is_ok' callback", async () => {
-    let is_ok = jest.fn(async (mock: PoolMock) => true);
+    let is_ok = jest.fn(async () => true);
     let pool = await NewPooler(Object.assign(mock_opts(), { is_ok }));
 
     let mock = await pool.get();
@@ -232,7 +232,7 @@ describe("Pool options", () => {
   it("should destroy when 'is_ok' returns false after 'put'", async () => {
     // True for initial buffer
     let ok = true;
-    let is_ok = jest.fn(async (mock: PoolMock) => ok);
+    let is_ok = jest.fn(async () => ok);
     let opts = Object.assign(mock_opts(), { is_ok, destructor: jest.fn() });
     let pool = await NewPooler(opts);
 
@@ -246,20 +246,21 @@ describe("Pool options", () => {
 
   it("should use both health check callbacks and call 'is_ok_sync' first", async () => {
     enum WhichFn {
-      is_ok = 1,
+      nil,
+      is_ok,
       is_ok_sync,
     }
 
-    let first: WhichFn;
+    let first = WhichFn.nil;
 
-    let is_ok = jest.fn(async (mock: PoolMock) => {
+    let is_ok = jest.fn(async () => {
       if (!first) {
         first = WhichFn.is_ok;
       }
       return true;
     });
 
-    let is_ok_sync = jest.fn((mock: PoolMock) => {
+    let is_ok_sync = jest.fn(() => {
       if (!first) {
         first = WhichFn.is_ok_sync;
       }
@@ -282,8 +283,8 @@ describe("Pool options", () => {
     // Initialize 'ok' to true so we can buffer up the pool.
     let ok = true;
 
-    let is_ok = jest.fn(async (mock: PoolMock) => ok);
-    let is_ok_sync = jest.fn((mock: PoolMock) => ok);
+    let is_ok = jest.fn(async () => ok);
+    let is_ok_sync = jest.fn(() => ok);
 
     let destructor = jest.fn(PoolMock.destructor);
     let opts = Object.assign(mock_opts(), { is_ok, is_ok_sync, destructor });
@@ -389,7 +390,7 @@ describe("Pool internals", () => {
         return new PoolMock();
       },
     });
-    let pool = await NewPooler<PoolMock>(opts);
+    await NewPooler<PoolMock>(opts);
 
     expect(count).toBe(throw_limit);
   });
